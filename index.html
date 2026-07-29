@@ -1,565 +1,130 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BELLAVIP — Dark Cyberpunk Experience</title>
-    <!-- Telegram Mini App SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --neon-pink: #ff0055;
-            --neon-violet: #8a2be2;
-            --neon-cyan: #00f2ff;
-            --bg-dark: #050308;
-            --panel-bg: rgba(12, 8, 20, 0.92);
-            --border-glow: rgba(255, 0, 85, 0.4);
-            --text-main: #e8d0e0;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            font-family: 'Share Tech Mono', monospace;
-            line-height: 1.5;
-            min-height: 100vh;
-            overflow-x: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-image: 
-                radial-gradient(circle at 50% 10%, rgba(138, 43, 226, 0.3) 0%, transparent 60%),
-                radial-gradient(circle at 50% 90%, rgba(255, 0, 85, 0.25) 0%, transparent 50%),
-                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-            background-size: 100% 100%, 100% 100%, 25px 25px, 25px 25px;
-        }
-
-        body::after {
-            content: "";
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
-            background-size: 100% 4px;
-            pointer-events: none;
-            z-index: 100;
-            opacity: 0.6;
-        }
-
-        .container {
-            width: 92vw;
-            max-width: 480px;
-            margin: 20px auto;
-            background: var(--panel-bg);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--border-glow);
-            border-radius: 20px;
-            padding: 2rem 1.2rem;
-            box-shadow: 0 0 35px rgba(255, 0, 85, 0.25), inset 0 0 15px rgba(138, 43, 226, 0.2);
-            position: relative;
-            text-align: center;
-        }
-
-        .container::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 2px;
-            background: linear-gradient(90deg, transparent, var(--neon-pink), var(--neon-cyan), transparent);
-        }
-
-        /* Reproductor Táctico y Ecualizador Visual */
-        .audio-player-box {
-            margin: 0 auto 1.2rem;
-            padding: 8px 16px;
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid var(--neon-cyan);
-            border-radius: 30px;
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            box-shadow: 0 0 12px rgba(0, 242, 255, 0.2);
-        }
-
-        .audio-btn {
-            background: none;
-            border: none;
-            color: var(--neon-cyan);
-            font-size: 1.1rem;
-            cursor: pointer;
-        }
-
-        .audio-text {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.65rem;
-            color: var(--neon-cyan);
-            letter-spacing: 1px;
-        }
-
-        .eq-bar-container {
-            display: flex;
-            align-items: flex-end;
-            gap: 2px;
-            height: 12px;
-        }
-
-        .eq-bar {
-            width: 3px;
-            background: var(--neon-cyan);
-            height: 3px;
-            border-radius: 1px;
-        }
-
-        .playing .eq-bar:nth-child(1) { animation: eq 0.6s infinite ease-in-out alternate; }
-        .playing .eq-bar:nth-child(2) { animation: eq 0.4s infinite ease-in-out alternate 0.2s; }
-        .playing .eq-bar:nth-child(3) { animation: eq 0.8s infinite ease-in-out alternate 0.4s; }
-
-        @keyframes eq { 0% { height: 3px; } 100% { height: 12px; } }
-
-        /* Banner de Urgencia */
-        .urgency-banner {
-            background: rgba(255, 0, 85, 0.12);
-            border: 1px solid var(--neon-pink);
-            border-radius: 10px;
-            padding: 8px 12px;
-            margin-bottom: 1.2rem;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.7rem;
-            color: #ffffff;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 0 15px rgba(255, 0, 85, 0.15);
-        }
-
-        .timer-badge {
-            background: var(--neon-pink);
-            color: #fff;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-weight: 900;
-        }
-
-        /* Foto de Perfil con Pulso Neón */
-        .profile-container {
-            position: relative;
-            width: 115px;
-            height: 115px;
-            margin: 0 auto 1.2rem;
-        }
-
-        .profile-ring {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 2px solid var(--neon-pink);
-            padding: 4px;
-            box-shadow: 0 0 25px rgba(255, 0, 85, 0.6);
-            background: linear-gradient(135deg, var(--neon-violet), var(--neon-pink));
-            animation: ringPulse 3s infinite alternate;
-        }
-
-        @keyframes ringPulse {
-            0% { box-shadow: 0 0 15px rgba(255, 0, 85, 0.4); }
-            100% { box-shadow: 0 0 30px rgba(0, 242, 255, 0.8); }
-        }
-
-        .profile-img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            background: #000 url('perfil.png') center/cover no-repeat;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .logo {
-            font-family: 'Cinzel', serif;
-            font-size: 2.5rem;
-            font-weight: 900;
-            letter-spacing: 5px;
-            background: linear-gradient(180deg, #ffffff 0%, var(--neon-pink) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 15px rgba(255, 0, 85, 0.4);
-        }
-
-        .subtitle {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 4px;
-            color: var(--neon-cyan);
-            margin-top: 0.3rem;
-            text-shadow: 0 0 8px rgba(0, 242, 255, 0.4);
-        }
-
-        .tagline {
-            font-size: 0.78rem;
-            font-style: italic;
-            color: #b080a0;
-            margin-top: 0.5rem;
-        }
-
-        .section { padding: 1.4rem 0; border-bottom: 1px solid rgba(138, 43, 226, 0.2); text-align: left; }
+<!-- Sección del Video de Alto Impacto -->
+<section class="section">
+    <div class="section-title">Vista Previa Exclusiva</div>
+    
+    <div class="video-preview-wrapper">
+        <video id="promoVideo" class="custom-video" poster="tu-miniatur-o-portada.jpg" playsinline loop>
+            <source src="tu-video.mp4" type="video/mp4">
+            Tu navegador no soporta el formato de video.
+        </video>
         
-        .section-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.85rem;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: #ffffff;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .section-title::before, .section-title::after {
-            content: ''; flex: 1; height: 1px;
-            background: linear-gradient(90deg, transparent, var(--neon-pink), transparent);
-        }
-
-        /* Tarjetas Glitch / Unlock Vault */
-        .vault-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .vault-card {
-            position: relative;
-            height: 110px;
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 0, 85, 0.3);
-            background: rgba(0, 0, 0, 0.6);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-            text-align: center;
-        }
-
-        .vault-blur {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, rgba(138, 43, 226, 0.4), rgba(0, 0, 0, 0.8));
-            backdrop-filter: blur(8px);
-            z-index: 1;
-        }
-
-        .vault-content {
-            position: relative;
-            z-index: 2;
-        }
-
-        .vault-icon { font-size: 1.5rem; margin-bottom: 4px; }
-        .vault-title { font-family: 'Orbitron', sans-serif; font-size: 0.68rem; color: #fff; font-weight: 700; }
-        .vault-tag { font-size: 0.6rem; color: var(--neon-cyan); margin-top: 2px; }
-
-        /* Botón Latido Neon (Pulse) */
-        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 1.2rem; }
-
-        .btn-direct {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
-            padding: 1rem;
-            border: none;
-            background: linear-gradient(135deg, var(--neon-pink), var(--neon-violet));
-            color: #ffffff;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 800;
-            text-decoration: none;
-            letter-spacing: 2px;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(255, 0, 85, 0.5);
-            animation: btnPulse 2s infinite;
-        }
-
-        @keyframes btnPulse {
-            0% { transform: scale(1); box-shadow: 0 0 15px rgba(255, 0, 85, 0.4); }
-            50% { transform: scale(1.02); box-shadow: 0 0 30px rgba(255, 0, 85, 0.8); }
-            100% { transform: scale(1); box-shadow: 0 0 15px rgba(255, 0, 85, 0.4); }
-        }
-
-        .btn-channel {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
-            padding: 0.85rem;
-            border: 1px solid var(--neon-cyan);
-            background: rgba(0, 242, 255, 0.05);
-            color: var(--neon-cyan);
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
-            text-decoration: none;
-            letter-spacing: 2px;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            border-radius: 10px;
-        }
-
-        .pricing-table { width: 100%; border-collapse: collapse; margin: 0.8rem 0; }
-        .pricing-table td { padding: 0.6rem 0.4rem; font-size: 0.78rem; color: #d0c0e0; }
-        .price-tag { font-family: 'Orbitron', sans-serif; font-weight: 700; color: var(--neon-pink); font-size: 0.95rem; }
-
-        details.secret {
-            margin: 1.2rem 0;
-            border: 1px solid rgba(255, 0, 85, 0.2);
-            border-radius: 8px;
-            background: rgba(5, 3, 8, 0.6);
-            text-align: left;
-        }
-
-        details.secret summary {
-            padding: 0.8rem 1rem;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.7rem;
-            letter-spacing: 1.5px;
-            color: var(--neon-pink);
-            cursor: pointer;
-            list-style: none;
-        }
-
-        details.secret .secret-content {
-            padding: 0.8rem 1rem;
-            font-size: 0.75rem;
-            color: #b090b0;
-            line-height: 1.7;
-            border-top: 1px solid rgba(255, 0, 85, 0.1);
-        }
-
-        /* Notificación Flotante Social Proof */
-        .toast-notification {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: rgba(12, 8, 20, 0.95);
-            border: 1px solid var(--neon-cyan);
-            border-radius: 30px;
-            padding: 8px 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
-            z-index: 200;
-            opacity: 0;
-            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-        }
-
-        .toast-notification.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-
-        .toast-dot { width: 8px; height: 8px; background: var(--neon-cyan); border-radius: 50%; box-shadow: 0 0 8px var(--neon-cyan); }
-        .toast-text { font-size: 0.68rem; color: #fff; font-family: 'Orbitron', sans-serif; }
-
-        .footer { text-align: center; padding-top: 1.5rem; }
-        .footer-quote { font-family: 'Cinzel', serif; font-size: 0.85rem; color: #a080a0; }
-    </style>
-</head>
-<body>
-
-<!-- Audio de fondo -->
-<audio id="bgm" loop preload="auto">
-    <source src="musica.mp3" type="audio/mpeg">
-</audio>
-
-<div class="container">
-    <!-- Banner de Urgencia -->
-    <div class="urgency-banner">
-        <span>⚡ OFERTA VIP EXPIRA EN:</span>
-        <span class="timer-badge" id="timer">14:59</span>
-    </div>
-
-    <!-- Reproductor de Audio Táctico -->
-    <div class="audio-player-box">
-        <button class="audio-btn" id="playBtn" onclick="toggleAudio()">▶</button>
-        <span class="audio-text" id="audioStatus">AUDIO: PAUSADO</span>
-        <div class="eq-bar-container" id="eqBars">
-            <div class="eq-bar"></div>
-            <div class="eq-bar"></div>
-            <div class="eq-bar"></div>
-        </div>
-    </div>
-
-    <!-- Foto de Perfil Bella Baxter -->
-    <div class="profile-container">
-        <div class="profile-ring">
-            <div class="profile-img"></div>
-        </div>
-    </div>
-
-    <header>
-        <div class="logo">BELLAVIP</div>
-        <div class="subtitle">OSCURIDAD QUE EXCITA</div>
-        <div class="tagline">"No sonrío. Miro fijo. Y sé que me ves."</div>
-    </header>
-
-    <section class="section">
-        <div class="section-title">Planes & Suscripción</div>
-        <table class="pricing-table">
-            <tr>
-                <td>VIP 1 Mes (Explícito diario)</td>
-                <td><span class="price-tag">$10</span></td>
-            </tr>
-            <tr>
-                <td>VIP 3 Meses (Pack + Exclusivo)</td>
-                <td><span class="price-tag">$25</span></td>
-            </tr>
-        </table>
-        <div style="font-size: 0.68rem; color: var(--neon-pink); text-align: center; font-family: 'Orbitron'; margin-top: 4px;">
-            ☢ SOLO 3 CUPOS DISPONIBLES A ESTE PRECIO
-        </div>
-    </section>
-
-    <!-- Botones Directos de Conversión -->
-    <div class="btn-group">
-        <a href="https://t.me/NNoirBellaBaxter" target="_blank" class="btn-direct">
-            💬 HABLAR CON BELLA (@NNoirBellaBaxter)
-        </a>
-        <a href="https://t.me/+Q8phSSbeAF1lZTAx" target="_blank" class="btn-channel">
-            🔗 PREVIEW GRATIS EN EL CANAL
-        </a>
-    </div>
-
-    <!-- Vista Previa de Galería Censurada (Vault) -->
-    <section class="section">
-        <div class="section-title">Bóveda Privada</div>
-        <div class="vault-grid">
-            <div class="vault-card">
-                <div class="vault-blur"></div>
-                <div class="vault-content">
-                    <div class="vault-icon">🔒</div>
-                    <div class="vault-title">LÉSBICO UNCUT</div>
-                    <div class="vault-tag">DESBLOQUEAR EN VIP</div>
-                </div>
+        <!-- Overlay táctico con botón de reproducción -->
+        <div class="video-overlay" id="videoOverlay" onclick="toggleMainVideo()">
+            <div class="play-trigger">
+                <span class="play-icon">▶</span>
             </div>
-            <div class="vault-card">
-                <div class="vault-blur"></div>
-                <div class="vault-content">
-                    <div class="vault-icon">🔒</div>
-                    <div class="vault-title">SOLO CAM CENSURA</div>
-                    <div class="vault-tag">DESBLOQUEAR EN VIP</div>
-                </div>
-            </div>
+            <div class="video-tag">PREVIEW • UNCUT</div>
         </div>
-    </section>
-
-    <details class="secret">
-        <summary>🖤 LO QUE NO SUBO AL PÚBLICO</summary>
-        <div class="secret-content">
-            → Mi cara cuando me toco y sé que me graban.<br>
-            → El sonido de mi cadena al caer al piso.<br>
-            → Videos completos, sin censura ni cortes.
-        </div>
-    </details>
-
-    <div style="font-size: 0.72rem; color: var(--neon-cyan); margin: 10px 0; font-family: 'Orbitron'; text-align: center;">
-        🔱 3 RECOMENDADOS AL CANAL = VIP GRATIS
     </div>
+</section>
 
-    <footer class="footer">
-        <div class="footer-quote">La oscuridad también tiene cuerpo</div>
-        <div style="font-size: 0.62rem; color: #806080; margin-top: 6px;">Bella — Gótica — Exhibicionista</div>
-    </footer>
-</div>
-
-<!-- Notificación Social Proof -->
-<div class="toast-notification" id="toast">
-    <div class="toast-dot"></div>
-    <div class="toast-text" id="toastText">Un usuario ingresó al VIP 1 Mes 🔱</div>
-</div>
-
-<script>
-    if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.ready();
-        window.Telegram.WebApp.expand();
+<style>
+    /* Estilos del Reproductor Exclusivo */
+    .video-preview-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 320px;
+        margin: 0 auto;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid var(--neon-pink);
+        box-shadow: 0 0 25px rgba(255, 0, 85, 0.35), inset 0 0 15px rgba(0, 0, 0, 0.8);
+        background: #000;
+        aspect-ratio: 9 / 16; /* Mantener formato vertical impecable */
     }
 
-    // Control de Audio
-    const audio = document.getElementById('bgm');
+    .custom-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .video-overlay {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(5, 3, 8, 0.4);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .video-overlay.playing {
+        background: rgba(0, 0, 0, 0); /* Transparente al reproducir */
+    }
+
+    .play-trigger {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: rgba(12, 8, 20, 0.8);
+        border: 2px solid var(--neon-pink);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 0 20px rgba(255, 0, 85, 0.6);
+        transition: transform 0.2s ease;
+    }
+
+    .play-icon {
+        color: #fff;
+        font-size: 1.2rem;
+        margin-left: 3px;
+    }
+
+    .video-overlay.playing .play-trigger {
+        opacity: 0;
+        transform: scale(0.8);
+        pointer-events: none;
+    }
+
+    .video-tag {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: rgba(0, 0, 0, 0.7);
+        border: 1px solid var(--neon-cyan);
+        color: var(--neon-cyan);
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.6rem;
+        padding: 4px 8px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+    }
+</style>
+
+<script>
+    // Lógica para pausar el audio de fondo cuando el video se reproduzca
+    const mainVideo = document.getElementById('promoVideo');
+    const videoOverlay = document.getElementById('videoOverlay');
+    const bgAudio = document.getElementById('bgm'); // ID de tu música de fondo
     const playBtn = document.getElementById('playBtn');
     const audioStatus = document.getElementById('audioStatus');
     const eqBars = document.getElementById('eqBars');
 
-    function toggleAudio() {
-        if (audio.paused) {
-            audio.play().then(() => {
-                playBtn.innerText = '⏸';
-                audioStatus.innerText = 'AUDIO: REPRODUCIENDO';
-                eqBars.classList.add('playing');
-            }).catch(e => console.log(e));
+    function toggleMainVideo() {
+        if (mainVideo.paused) {
+            // Pausar música de fondo si está sonando
+            if (bgAudio && !bgAudio.paused) {
+                bgAudio.pause();
+                if (playBtn) playBtn.innerText = '▶';
+                if (audioStatus) audioStatus.innerText = 'AUDIO: PAUSADO';
+                if (eqBars) eqBars.classList.remove('playing');
+            }
+            
+            mainVideo.play();
+            videoOverlay.classList.add('playing');
         } else {
-            audio.pause();
-            playBtn.innerText = '▶';
-            audioStatus.innerText = 'AUDIO: PAUSADO';
-            eqBars.classList.remove('playing');
+            mainVideo.pause();
+            videoOverlay.classList.remove('playing');
         }
     }
 
-    // Auto-play en primera interacción
-    document.body.addEventListener('click', function startOnTouch() {
-        if (audio.paused) {
-            audio.play().then(() => {
-                playBtn.innerText = '⏸';
-                audioStatus.innerText = 'AUDIO: REPRODUCIENDO';
-                eqBars.classList.add('playing');
-            }).catch(() => {});
-        }
-        document.body.removeEventListener('click', startOnTouch);
-    }, { once: true });
-
-    // Temporizador de Oferta (15 min)
-    let time = 899;
-    const timerElement = document.getElementById('timer');
-    setInterval(() => {
-        let minutes = Math.floor(time / 60);
-        let seconds = time % 60;
-        seconds = seconds < 10 ? '0' + seconds : seconds;
-        timerElement.innerText = `${minutes}:${seconds}`;
-        if (time > 0) time--;
-    }, 1000);
-
-    // Social Proof Falso (Notificaciones periódicas para activar compras)
-    const toast = document.getElementById('toast');
-    const toastText = document.getElementById('toastText');
-    const messages = [
-        "Un usuario se unió al VIP 1 Mes 🔱",
-        "Nuevo acceso concedido al VIP 3 Meses ⚔️",
-        "Cupos VIP actualizados: Quedan 2"
-    ];
-    let msgIdx = 0;
-
-    function showNotification() {
-        toastText.innerText = messages[msgIdx];
-        toast.classList.add('show');
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3500);
-        msgIdx = (msgIdx + 1) % messages.length;
-    }
-
-    setTimeout(() => {
-        showNotification();
-        setInterval(showNotification, 12000);
-    }, 4000);
-</script>
-
-</body>
-</html>
+    // Si el video termina, quita el overlay
+    mainVideo.addEventListener('ended', () => {
+        videoOverlay.classList.remove('playing');
+    });
+                    </script>
