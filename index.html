@@ -71,6 +71,35 @@
             background: linear-gradient(90deg, transparent, var(--neon-pink), var(--neon-cyan), transparent);
         }
 
+        /* Reproductor de Audio Flotante / Neón */
+        .audio-player-box {
+            margin: 0 auto 1.2rem;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 0 12px rgba(0, 242, 255, 0.2);
+        }
+
+        .audio-btn {
+            background: none;
+            border: none;
+            color: var(--neon-cyan);
+            font-size: 1.2rem;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .audio-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.65rem;
+            color: var(--neon-cyan);
+            letter-spacing: 1px;
+        }
+
         /* Foto de Perfil Táctica */
         .profile-container {
             position: relative;
@@ -246,7 +275,18 @@
 </head>
 <body>
 
+<!-- Audio de fondo (Carga tu canción como musica.mp3) -->
+<audio id="bgm" loop preload="auto">
+    <source src="musica.mp3" type="audio/mpeg">
+</audio>
+
 <div class="container">
+    <!-- Reproductor de Audio Táctico -->
+    <div class="audio-player-box">
+        <button class="audio-btn" id="playBtn" onclick="toggleAudio()">▶</button>
+        <span class="audio-text" id="audioStatus">AUDIO: PAUSADO</span>
+    </div>
+
     <!-- Foto de Perfil Bella Baxter -->
     <div class="profile-container">
         <div class="profile-ring">
@@ -332,6 +372,34 @@
         window.Telegram.WebApp.ready();
         window.Telegram.WebApp.expand();
     }
+
+    const audio = document.getElementById('bgm');
+    const playBtn = document.getElementById('playBtn');
+    const audioStatus = document.getElementById('audioStatus');
+
+    function toggleAudio() {
+        if (audio.paused) {
+            audio.play().then(() => {
+                playBtn.innerText = '⏸';
+                audioStatus.innerText = 'AUDIO: REPRODUCIENDO';
+            }).catch(e => console.log(e));
+        } else {
+            audio.pause();
+            playBtn.innerText = '▶';
+            audioStatus.innerText = 'AUDIO: PAUSADO';
+        }
+    }
+
+    // Intentar reproducción con el primer toque en cualquier parte de la pantalla
+    document.body.addEventListener('click', function startOnTouch() {
+        if (audio.paused) {
+            audio.play().then(() => {
+                playBtn.innerText = '⏸';
+                audioStatus.innerText = 'AUDIO: REPRODUCIENDO';
+            }).catch(() => {});
+        }
+        document.body.removeEventListener('click', startOnTouch);
+    }, { once: true });
 </script>
 
 </body>
